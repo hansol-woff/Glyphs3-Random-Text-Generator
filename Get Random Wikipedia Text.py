@@ -12,8 +12,8 @@ import ssl
 import webbrowser
 from vanilla import FloatingWindow, Button, TextBox, PopUpButton
 
-MIN_LENGTH = 500
-MAX_LENGTH = 3000
+MIN_LENGTH = 100
+MAX_LENGTH = 1000
 MAX_RETRIES = 5
 
 LANGUAGES = {
@@ -102,7 +102,7 @@ class RandomTextGenerator(object):
             print("Error: No font is open. Please open a font file first.")
             return
 
-        self.w = FloatingWindow((220, 150), "Random Text Generator")
+        self.w = FloatingWindow((280, 150), "Random Text Generator")
         
         self.w.descriptionText = TextBox((10, 10, -10, 30), "Select a language and click Generate to get random text from Wikipedia (CC BY-SA 4.0).", sizeStyle='small')
         
