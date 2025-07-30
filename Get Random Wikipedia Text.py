@@ -10,11 +10,24 @@ import urllib.parse
 import json
 import ssl
 import webbrowser
-from vanilla import FloatingWindow, Button, TextBox
+from vanilla import FloatingWindow, Button, TextBox, PopUpButton
 
 MIN_LENGTH = 500
 MAX_LENGTH = 3000
 MAX_RETRIES = 5
+
+LANGUAGES = {
+    "English": "en",
+    "한국어": "ko",
+    "日本語": "ja",
+    "中文": "zh",
+    "Deutsch": "de",
+    "Français": "fr",
+    "Español": "es",
+    "Русский": "ru",
+    "Tiếng Việt": "vi",
+    "العربية": "ar"
+}
 
 def fetch_random_wikipedia_text(lang='en'):
     """
@@ -89,22 +102,14 @@ class RandomTextGenerator(object):
             print("Error: No font is open. Please open a font file first.")
             return
 
-        self.w = FloatingWindow((320, 390), "Random Text Generator")
+        self.w = FloatingWindow((220, 150), "Random Text Generator")
         
-        self.w.descriptionText = TextBox((10, 10, -10, 30), "Click a button to fetch random text from Wikipedia (CC BY-SA 4.0).", sizeStyle='small')
+        self.w.descriptionText = TextBox((10, 10, -10, 30), "Select a language and click Generate to get random text from Wikipedia (CC BY-SA 4.0).", sizeStyle='small')
         
-        self.w.wikiENButton = Button((10, 45, -10, 25), "English", callback=self.generate_text_callback)
-        self.w.wikiKOButton = Button((10, 75, -10, 25), "한국어", callback=self.generate_text_callback)
-        self.w.wikiJAButton = Button((10, 105, -10, 25), "日本語", callback=self.generate_text_callback)
-        self.w.wikiZHButton = Button((10, 135, -10, 25), "中文", callback=self.generate_text_callback)
-        self.w.wikiDEButton = Button((10, 165, -10, 25), "Deutsch", callback=self.generate_text_callback)
-        self.w.wikiFRButton = Button((10, 195, -10, 25), "Français", callback=self.generate_text_callback)
-        self.w.wikiESButton = Button((10, 225, -10, 25), "Español", callback=self.generate_text_callback)
-        self.w.wikiRUButton = Button((10, 255, -10, 25), "Русский", callback=self.generate_text_callback)
-        self.w.wikiVIButton = Button((10, 285, -10, 25), "Tiếng Việt", callback=self.generate_text_callback)
-        self.w.wikiARButton = Button((10, 315, -10, 25), "العربية", callback=self.generate_text_callback)
+        self.w.languageDropdown = PopUpButton((10, 45, -10, 25), list(LANGUAGES.keys()), callback=None)
+        self.w.generateButton = Button((10, 80, -10, 25), "Generate Sample Text", callback=self.generate_text_callback)
         
-        self.w.viewOriginalButton = Button((10, 355, -10, 25), "View Original Article", callback=self.view_original_callback)
+        self.w.viewOriginalButton = Button((10, 115, -10, 25), "View Original Article", callback=self.view_original_callback)
         self.w.viewOriginalButton.enable(False)
         
         self.article_url = None
@@ -114,33 +119,16 @@ class RandomTextGenerator(object):
     def generate_text_callback(self, sender):
         Glyphs.clearLog()
         
-        text = None
-        error = None
-        self.article_url = None
+        selected_language_name = self.w.languageDropdown.getItems()[self.w.languageDropdown.get()]
+        lang_code = LANGUAGES[selected_language_name]
+        
+        text, self.article_url, error = fetch_random_wikipedia_text(lang=lang_code)
+
         self.w.viewOriginalButton.enable(False)
 
-        if sender == self.w.wikiENButton:
-            text, self.article_url, error = fetch_random_wikipedia_text(lang='en')
-        elif sender == self.w.wikiKOButton:
-            text, self.article_url, error = fetch_random_wikipedia_text(lang='ko')
-        elif sender == self.w.wikiJAButton:
-            text, self.article_url, error = fetch_random_wikipedia_text(lang='ja')
-        elif sender == self.w.wikiZHButton:
-            text, self.article_url, error = fetch_random_wikipedia_text(lang='zh')
-        elif sender == self.w.wikiDEButton:
-            text, self.article_url, error = fetch_random_wikipedia_text(lang='de')
-        elif sender == self.w.wikiFRButton:
-            text, self.article_url, error = fetch_random_wikipedia_text(lang='fr')
-        elif sender == self.w.wikiESButton:
-            text, self.article_url, error = fetch_random_wikipedia_text(lang='es')
-        elif sender == self.w.wikiRUButton:
-            text, self.article_url, error = fetch_random_wikipedia_text(lang='ru')
-        elif sender == self.w.wikiVIButton:
-            text, self.article_url, error = fetch_random_wikipedia_text(lang='vi')
-        elif sender == self.w.wikiARButton:
-            text, self.article_url, error = fetch_random_wikipedia_text(lang='ar')
-
         if error:
+            Glyphs.showMacroWindow()
+            print(error)
             return
 
         if text:
