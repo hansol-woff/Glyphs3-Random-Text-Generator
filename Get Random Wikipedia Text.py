@@ -19,14 +19,16 @@ MAX_RETRIES = 5
 def fetch_random_wikipedia_text(lang='en'):
     """
     Fetches a random article from Wikipedia, ensuring the text is within a reasonable length.
+    Retries on temporary errors and only reports a final failure.
     """
     ssl_context = ssl._create_unverified_context()
+    last_error = "No specific error was recorded."
 
     for i in range(MAX_RETRIES):
         print(f"Fetching a random Wikipedia article in '{lang}'... (Attempt {i+1}/{MAX_RETRIES})")
         
-        # 1. Get a random article title
         try:
+            # 1. Get a random article title
             random_url = f"https://{lang}.wikipedia.org/w/api.php?action=query&list=random&format=json&rnnamespace=0&rnlimit=1"
             with urllib.request.urlopen(random_url, context=ssl_context) as response:
                 random_data = json.loads(response.read().decode())
@@ -36,13 +38,7 @@ def fetch_random_wikipedia_text(lang='en'):
             
             article_url = f"https://{lang}.wikipedia.org/wiki/{urllib.parse.quote(random_title.replace(' ', '_'))}"
 
-        except Exception as e:
-            error_msg = f"Error fetching random article title: {e}"
-            print(error_msg)
-            return None, None, error_msg
-
-        # 2. Get the content of that article
-        try:
+            # 2. Get the content of that article
             base_url = f"https://{lang}.wikipedia.org/w/api.php"
             params = {
                 "action": "query",
@@ -61,7 +57,7 @@ def fetch_random_wikipedia_text(lang='en'):
             page_id = next(iter(pages))
             
             if page_id == "-1":
-                print(f"Error: Article '{random_title}' could not be found. Retrying...")
+                print(f"Article '{random_title}' could not be found. Retrying...")
                 continue
 
             extract = pages[page_id].get("extract", "")
@@ -74,15 +70,16 @@ def fetch_random_wikipedia_text(lang='en'):
                 print(f"Article is too long ({len(extract)} chars). Truncating to {MAX_LENGTH} chars.")
                 extract = extract[:MAX_LENGTH]
 
+            # Success!
             return extract, article_url, None
 
         except Exception as e:
-            error_msg = f"An error occurred while fetching content: {e}"
-            print(error_msg)
+            last_error = f"<{e.__class__.__name__}> {e}"
+            # Silently retry
             continue
             
-    final_error_msg = f"Failed to find a suitable article after {MAX_RETRIES} attempts."
-    print(final_error_msg)
+    # This part is reached only if the loop completes without returning successfully.
+    final_error_msg = f"Failed to find a suitable article after {MAX_RETRIES} attempts. Last error: {last_error}"
     return None, None, final_error_msg
 
 class RandomTextGenerator(object):
@@ -119,8 +116,6 @@ class RandomTextGenerator(object):
             text, self.article_url, error = fetch_random_wikipedia_text(lang='ko')
 
         if error:
-            Glyphs.showMacroWindow()
-            print(f"Failed to fetch text: {error}")
             return
 
         if text:
