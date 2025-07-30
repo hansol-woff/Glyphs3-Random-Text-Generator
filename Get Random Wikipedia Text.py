@@ -1,7 +1,7 @@
-#MenuTitle: Get Random Wikipedia Text
+#MenuTitle: Random Wikipedia Text Generator
 # -*- coding: utf-8 -*-
 __doc__="""
-Fetches a random Wikipedia article and displays its plain text content in the current Edit View.
+Fetches a random Wikipedia article and displays its plain text content in the current Edit View via a simple UI.
 """
 
 import GlyphsApp
@@ -9,10 +9,11 @@ import urllib.request
 import urllib.parse
 import json
 import ssl
+from vanilla import FloatingWindow, Button
 
 def fetch_random_wikipedia_text():
     """
-    Fetches a random article from Wikipedia and returns its plain text.
+    Fetches a random article from Wikipedia and returns its plain text and an error message if one occurs.
     """
     print("Fetching a random Wikipedia article...")
     
@@ -30,9 +31,9 @@ def fetch_random_wikipedia_text():
         print(f"Found random article: '{random_title}'")
 
     except Exception as e:
-        print(f"Error fetching random article title: {e}")
-        Glyphs.showMacroWindow()
-        return None
+        error_msg = f"Error fetching random article title: {e}"
+        print(error_msg)
+        return None, error_msg
 
     # 2. Get the content of that article
     try:
@@ -57,31 +58,63 @@ def fetch_random_wikipedia_text():
         page_id = next(iter(pages))
         
         if page_id == "-1":
-            print(f"Error: Article '{random_title}' could not be found after random selection.")
-            Glyphs.showMacroWindow()
-            return None
+            error_msg = f"Error: Article '{random_title}' could not be found after random selection."
+            print(error_msg)
+            return None, error_msg
 
         extract = pages[page_id].get("extract", "")
-        return extract
+        return extract, None
 
     except Exception as e:
-        print(f"An error occurred while fetching content: {e}")
-        Glyphs.showMacroWindow()
-        return None
+        error_msg = f"An error occurred while fetching content: {e}"
+        print(error_msg)
+        return None, error_msg
+
+class RandomTextGenerator(object):
+    def __init__(self):
+        if not Glyphs.font:
+            Glyphs.showMacroWindow()
+            print("Error: No font is open. Please open a font file first.")
+            return
+
+        # Window dimensions and title
+        self.w = FloatingWindow((300, 80), "Random Text Generator")
+        
+        # UI Elements
+        self.w.generateButton = Button((10, 10, -10, -10), "Generate Random Text", callback=self.generate_text_callback)
+        
+        # Open the window
+        self.w.open()
+        
+        # Run once on startup
+        self.generate_text_callback(None)
+
+    def generate_text_callback(self, sender):
+        # Clear the Macro Window for new output
+        Glyphs.clearLog()
+        
+        # Fetch the text
+        wikipedia_text, error = fetch_random_wikipedia_text()
+
+        if error:
+            Glyphs.showMacroWindow()
+            print(f"Failed to fetch Wikipedia text: {error}")
+            return
+
+        if wikipedia_text:
+            # Put the text into the current tab
+            if Glyphs.font.currentTab:
+                Glyphs.font.currentText = wikipedia_text
+            else:
+                Glyphs.font.newTab(wikipedia_text)
+            print("Successfully displayed random Wikipedia text in the Edit View.")
+        else:
+            Glyphs.showMacroWindow()
+            print("Failed to fetch or display Wikipedia text. The article might be empty.")
 
 # --- Main execution ---
-if Glyphs.font:
-    # Fetch the text
-    wikipedia_text = fetch_random_wikipedia_text()
-
-    if wikipedia_text:
-        # Put the text into the current tab
-        Glyphs.font.currentText = wikipedia_text
-        print("Successfully displayed random Wikipedia text in the Edit View.")
-    else:
-        # Error message is already printed by the function
-        print("Failed to fetch or display Wikipedia text.")
-        Glyphs.showMacroWindow()
+# Check if the script is running in Glyphs
+if 'Glyphs' in globals():
+    RandomTextGenerator()
 else:
-    print("Error: No font is open. Please open a font file first.")
-    Glyphs.showMacroWindow()
+    print("This script must be run from within Glyphs App.")
