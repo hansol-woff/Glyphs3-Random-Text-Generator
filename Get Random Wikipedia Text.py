@@ -89,7 +89,7 @@ class RandomTextGenerator(object):
             print("Error: No font is open. Please open a font file first.")
             return
 
-        self.w = FloatingWindow((320, 330), "Random Text Generator")
+        self.w = FloatingWindow((320, 390), "Random Text Generator")
         
         self.w.descriptionText = TextBox((10, 10, -10, 30), "Click a button to fetch random text from Wikipedia (CC BY-SA 4.0).", sizeStyle='small')
         
@@ -101,8 +101,10 @@ class RandomTextGenerator(object):
         self.w.wikiFRButton = Button((10, 195, -10, 25), "Français", callback=self.generate_text_callback)
         self.w.wikiESButton = Button((10, 225, -10, 25), "Español", callback=self.generate_text_callback)
         self.w.wikiRUButton = Button((10, 255, -10, 25), "Русский", callback=self.generate_text_callback)
+        self.w.wikiVIButton = Button((10, 285, -10, 25), "Tiếng Việt", callback=self.generate_text_callback)
+        self.w.wikiARButton = Button((10, 315, -10, 25), "العربية", callback=self.generate_text_callback)
         
-        self.w.viewOriginalButton = Button((10, 295, -10, 25), "View Original Article", callback=self.view_original_callback)
+        self.w.viewOriginalButton = Button((10, 355, -10, 25), "View Original Article", callback=self.view_original_callback)
         self.w.viewOriginalButton.enable(False)
         
         self.article_url = None
@@ -133,6 +135,10 @@ class RandomTextGenerator(object):
             text, self.article_url, error = fetch_random_wikipedia_text(lang='es')
         elif sender == self.w.wikiRUButton:
             text, self.article_url, error = fetch_random_wikipedia_text(lang='ru')
+        elif sender == self.w.wikiVIButton:
+            text, self.article_url, error = fetch_random_wikipedia_text(lang='vi')
+        elif sender == self.w.wikiARButton:
+            text, self.article_url, error = fetch_random_wikipedia_text(lang='ar')
 
         if error:
             return
