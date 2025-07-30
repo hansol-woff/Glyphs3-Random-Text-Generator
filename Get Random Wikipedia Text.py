@@ -1,7 +1,7 @@
-#MenuTitle: Random Wikipedia Text Generator
+#MenuTitle: Random Text Generator
 # -*- coding: utf-8 -*-
 __doc__="""
-Fetches a random Wikipedia article and displays its plain text content in the current Edit View via a simple UI.
+Fetches a random article from Wikipedia and displays its plain text content in the current Edit View via a simple UI.
 """
 
 import GlyphsApp
@@ -9,21 +9,19 @@ import urllib.request
 import urllib.parse
 import json
 import ssl
-from vanilla import FloatingWindow, Button
+from vanilla import FloatingWindow, Button, TextBox
 
-def fetch_random_wikipedia_text():
+def fetch_random_wikipedia_text(lang='en'):
     """
-    Fetches a random article from Wikipedia and returns its plain text and an error message if one occurs.
+    Fetches a random article from Wikipedia in the specified language and returns its plain text.
     """
-    print("Fetching a random Wikipedia article...")
+    print(f"Fetching a random Wikipedia article in '{lang}'...")
     
-    # Create an SSL context that does not verify certificates
-    # This is a workaround for the CERTIFICATE_VERIFY_FAILED error on macOS
     ssl_context = ssl._create_unverified_context()
-
+    
     # 1. Get a random article title
     try:
-        random_url = "https://en.wikipedia.org/w/api.php?action=query&list=random&format=json&rnnamespace=0&rnlimit=1"
+        random_url = f"https://{lang}.wikipedia.org/w/api.php?action=query&list=random&format=json&rnnamespace=0&rnlimit=1"
         with urllib.request.urlopen(random_url, context=ssl_context) as response:
             random_data = json.loads(response.read().decode())
         
@@ -37,14 +35,13 @@ def fetch_random_wikipedia_text():
 
     # 2. Get the content of that article
     try:
-        # Prepare URL for Wikipedia API
-        base_url = "https://en.wikipedia.org/w/api.php"
+        base_url = f"https://{lang}.wikipedia.org/w/api.php"
         params = {
             "action": "query",
             "format": "json",
             "titles": random_title,
             "prop": "extracts",
-            "exintro": False, # Get the full text, not just the intro
+            "exintro": False,
             "explaintext": True,
             "redirects": 1,
         }
@@ -53,12 +50,11 @@ def fetch_random_wikipedia_text():
         with urllib.request.urlopen(content_url, context=ssl_context) as response:
             content_data = json.loads(response.read().decode())
 
-        # Parse the JSON response
         pages = content_data["query"]["pages"]
         page_id = next(iter(pages))
         
         if page_id == "-1":
-            error_msg = f"Error: Article '{random_title}' could not be found after random selection."
+            error_msg = f"Error: Article '{random_title}' could not be found."
             print(error_msg)
             return None, error_msg
 
@@ -77,43 +73,40 @@ class RandomTextGenerator(object):
             print("Error: No font is open. Please open a font file first.")
             return
 
-        # Window dimensions and title
-        self.w = FloatingWindow((300, 80), "Random Text Generator")
+        self.w = FloatingWindow((320, 120), "Random Text Generator")
         
-        # UI Elements
-        self.w.generateButton = Button((10, 10, -10, -10), "Generate Random Text", callback=self.generate_text_callback)
+        self.w.descriptionText = TextBox((10, 10, -10, 30), "Click a button to fetch random text from the corresponding site.", sizeStyle='small')
+        self.w.wikiENButton = Button((10, 45, -10, 25), "Wikipedia (EN)", callback=self.generate_text_callback)
+        self.w.wikiKOButton = Button((10, 80, -10, 25), "Wikipedia (KO+EN)", callback=self.generate_text_callback)
         
-        # Open the window
         self.w.open()
-        
-        # Run once on startup
-        self.generate_text_callback(None)
 
     def generate_text_callback(self, sender):
-        # Clear the Macro Window for new output
         Glyphs.clearLog()
         
-        # Fetch the text
-        wikipedia_text, error = fetch_random_wikipedia_text()
+        text = None
+        error = None
+
+        if sender == self.w.wikiENButton:
+            text, error = fetch_random_wikipedia_text(lang='en')
+        elif sender == self.w.wikiKOButton:
+            text, error = fetch_random_wikipedia_text(lang='ko')
 
         if error:
             Glyphs.showMacroWindow()
-            print(f"Failed to fetch Wikipedia text: {error}")
+            print(f"Failed to fetch text: {error}")
             return
 
-        if wikipedia_text:
-            # Put the text into the current tab
+        if text:
             if Glyphs.font.currentTab:
-                Glyphs.font.currentText = wikipedia_text
+                Glyphs.font.currentText = text
             else:
-                Glyphs.font.newTab(wikipedia_text)
-            print("Successfully displayed random Wikipedia text in the Edit View.")
+                Glyphs.font.newTab(text)
+            print("Successfully displayed random text in the Edit View.")
         else:
             Glyphs.showMacroWindow()
-            print("Failed to fetch or display Wikipedia text. The article might be empty.")
+            print("Failed to fetch or display text. The article might be empty.")
 
-# --- Main execution ---
-# Check if the script is running in Glyphs
 if 'Glyphs' in globals():
     RandomTextGenerator()
 else:
