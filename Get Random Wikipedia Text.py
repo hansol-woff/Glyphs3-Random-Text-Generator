@@ -89,13 +89,15 @@ class RandomTextGenerator(object):
             print("Error: No font is open. Please open a font file first.")
             return
 
-        self.w = FloatingWindow((320, 150), "Random Text Generator")
+        self.w = FloatingWindow((320, 210), "Random Text Generator")
         
         self.w.descriptionText = TextBox((10, 10, -10, 30), "Click a button to fetch random text from Wikipedia (CC BY-SA 4.0).", sizeStyle='small')
-        self.w.wikiENButton = Button((10, 45, -10, 25), "Wikipedia (EN)", callback=self.generate_text_callback)
-        self.w.wikiKOButton = Button((10, 80, -10, 25), "Wikipedia (KO+EN)", callback=self.generate_text_callback)
+        self.w.wikiENButton = Button((10, 45, -10, 25), "English", callback=self.generate_text_callback)
+        self.w.wikiKOButton = Button((10, 75, -10, 25), "한국어", callback=self.generate_text_callback)
+        self.w.wikiJAButton = Button((10, 105, -10, 25), "日本語", callback=self.generate_text_callback)
+        self.w.wikiZHButton = Button((10, 135, -10, 25), "中文", callback=self.generate_text_callback)
         
-        self.w.viewOriginalButton = Button((10, 115, -10, 25), "View Original Article", callback=self.view_original_callback)
+        self.w.viewOriginalButton = Button((10, 175, -10, 25), "View Original Article", callback=self.view_original_callback)
         self.w.viewOriginalButton.enable(False)
         
         self.article_url = None
@@ -114,6 +116,10 @@ class RandomTextGenerator(object):
             text, self.article_url, error = fetch_random_wikipedia_text(lang='en')
         elif sender == self.w.wikiKOButton:
             text, self.article_url, error = fetch_random_wikipedia_text(lang='ko')
+        elif sender == self.w.wikiJAButton:
+            text, self.article_url, error = fetch_random_wikipedia_text(lang='ja')
+        elif sender == self.w.wikiZHButton:
+            text, self.article_url, error = fetch_random_wikipedia_text(lang='zh')
 
         if error:
             return
