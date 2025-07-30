@@ -13,7 +13,7 @@ import webbrowser
 from vanilla import FloatingWindow, Button, TextBox
 
 MIN_LENGTH = 500
-MAX_LENGTH = 4000
+MAX_LENGTH = 3000
 MAX_RETRIES = 5
 
 def fetch_random_wikipedia_text(lang='en'):
