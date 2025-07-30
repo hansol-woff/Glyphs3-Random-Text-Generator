@@ -12,63 +12,78 @@ import ssl
 import webbrowser
 from vanilla import FloatingWindow, Button, TextBox
 
+MIN_LENGTH = 500
+MAX_LENGTH = 4000
+MAX_RETRIES = 5
+
 def fetch_random_wikipedia_text(lang='en'):
     """
-    Fetches a random article from Wikipedia in the specified language and returns its plain text and URL.
+    Fetches a random article from Wikipedia, ensuring the text is within a reasonable length.
     """
-    print(f"Fetching a random Wikipedia article in '{lang}'...")
-    
     ssl_context = ssl._create_unverified_context()
-    
-    # 1. Get a random article title
-    try:
-        random_url = f"https://{lang}.wikipedia.org/w/api.php?action=query&list=random&format=json&rnnamespace=0&rnlimit=1"
-        with urllib.request.urlopen(random_url, context=ssl_context) as response:
-            random_data = json.loads(response.read().decode())
+
+    for i in range(MAX_RETRIES):
+        print(f"Fetching a random Wikipedia article in '{lang}'... (Attempt {i+1}/{MAX_RETRIES})")
         
-        random_title = random_data["query"]["random"][0]["title"]
-        print(f"Found random article: '{random_title}'")
-        
-        # Create the article URL
-        article_url = f"https://{lang}.wikipedia.org/wiki/{urllib.parse.quote(random_title.replace(' ', '_'))}"
+        # 1. Get a random article title
+        try:
+            random_url = f"https://{lang}.wikipedia.org/w/api.php?action=query&list=random&format=json&rnnamespace=0&rnlimit=1"
+            with urllib.request.urlopen(random_url, context=ssl_context) as response:
+                random_data = json.loads(response.read().decode())
+            
+            random_title = random_data["query"]["random"][0]["title"]
+            print(f"Found random article: '{random_title}'")
+            
+            article_url = f"https://{lang}.wikipedia.org/wiki/{urllib.parse.quote(random_title.replace(' ', '_'))}"
 
-    except Exception as e:
-        error_msg = f"Error fetching random article title: {e}"
-        print(error_msg)
-        return None, None, error_msg
-
-    # 2. Get the content of that article
-    try:
-        base_url = f"https://{lang}.wikipedia.org/w/api.php"
-        params = {
-            "action": "query",
-            "format": "json",
-            "titles": random_title,
-            "prop": "extracts",
-            "exintro": False,
-            "explaintext": True,
-            "redirects": 1,
-        }
-        content_url = f"{base_url}?{urllib.parse.urlencode(params)}"
-
-        with urllib.request.urlopen(content_url, context=ssl_context) as response:
-            content_data = json.loads(response.read().decode())
-
-        pages = content_data["query"]["pages"]
-        page_id = next(iter(pages))
-        
-        if page_id == "-1":
-            error_msg = f"Error: Article '{random_title}' could not be found."
+        except Exception as e:
+            error_msg = f"Error fetching random article title: {e}"
             print(error_msg)
             return None, None, error_msg
 
-        extract = pages[page_id].get("extract", "")
-        return extract, article_url, None
+        # 2. Get the content of that article
+        try:
+            base_url = f"https://{lang}.wikipedia.org/w/api.php"
+            params = {
+                "action": "query",
+                "format": "json",
+                "titles": random_title,
+                "prop": "extracts",
+                "explaintext": True,
+                "redirects": 1,
+            }
+            content_url = f"{base_url}?{urllib.parse.urlencode(params)}"
 
-    except Exception as e:
-        error_msg = f"An error occurred while fetching content: {e}"
-        print(error_msg)
-        return None, None, error_msg
+            with urllib.request.urlopen(content_url, context=ssl_context) as response:
+                content_data = json.loads(response.read().decode())
+
+            pages = content_data["query"]["pages"]
+            page_id = next(iter(pages))
+            
+            if page_id == "-1":
+                print(f"Error: Article '{random_title}' could not be found. Retrying...")
+                continue
+
+            extract = pages[page_id].get("extract", "")
+
+            if len(extract) < MIN_LENGTH:
+                print(f"Article is too short ({len(extract)} chars). Retrying for a longer one.")
+                continue
+            
+            if len(extract) > MAX_LENGTH:
+                print(f"Article is too long ({len(extract)} chars). Truncating to {MAX_LENGTH} chars.")
+                extract = extract[:MAX_LENGTH]
+
+            return extract, article_url, None
+
+        except Exception as e:
+            error_msg = f"An error occurred while fetching content: {e}"
+            print(error_msg)
+            continue
+            
+    final_error_msg = f"Failed to find a suitable article after {MAX_RETRIES} attempts."
+    print(final_error_msg)
+    return None, None, final_error_msg
 
 class RandomTextGenerator(object):
     def __init__(self):
