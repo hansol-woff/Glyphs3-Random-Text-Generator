@@ -6,6 +6,9 @@ and displays its plain text content in the current Edit View of Glyphs 3.
 이 스크립트는 선택한 언어의 위키피디아에서 무작위 문서를 가져와
 Glyphs 3의 현재 편집 보기에 일반 텍스트 내용을 표시합니다.
 
+
+https://github.com/user-attachments/assets/1bbd08ca-a93e-4728-9592-a3c096460e0a
+
 ---
 
 ### Features
@@ -75,7 +78,3 @@ This script supports fetching random Wikipedia text in the following languages:
 
 If you have any questions or encounter any issues, please let me know.
 **Contact:** node.to.type@gmail.com
-
----
-
-[View on GitHub](https://github.com/node-to-type/Glyphs3-Random-Text-Generator)
