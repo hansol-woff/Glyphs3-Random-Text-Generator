@@ -119,7 +119,7 @@ class RandomTextGenerator(object):
         self.w.open()
 
     def open_github_callback(self, sender):
-        webbrowser.open("https://github.com/Baghansol/Baghansol-Glyphs3-Random-Text-Generator")
+        webbrowser.open("https://github.com/node-to-type/Glyphs3-Random-Text-Generator")
 
     def generate_text_callback(self, sender):
         Glyphs.clearLog()
