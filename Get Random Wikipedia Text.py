@@ -102,7 +102,7 @@ class RandomTextGenerator(object):
             print("Error: No font is open. Please open a font file first.")
             return
 
-        self.w = FloatingWindow((280, 150), "Random Text Generator")
+        self.w = FloatingWindow((280, 180), "Random Text Generator")
         
         self.w.descriptionText = TextBox((10, 10, -10, 30), "Select a language and click Generate to get random text from Wikipedia (CC BY-SA 4.0).", sizeStyle='small')
         
@@ -112,9 +112,14 @@ class RandomTextGenerator(object):
         self.w.viewOriginalButton = Button((10, 115, -10, 25), "View Original Article", callback=self.view_original_callback)
         self.w.viewOriginalButton.enable(False)
         
+        self.w.githubLink = Button((10, 150, 120, 20), "View on GitHub", callback=self.open_github_callback, sizeStyle='small')
+        
         self.article_url = None
 
         self.w.open()
+
+    def open_github_callback(self, sender):
+        webbrowser.open("https://github.com/Baghansol/Baghansol-Glyphs3-Random-Text-Generator")
 
     def generate_text_callback(self, sender):
         Glyphs.clearLog()
