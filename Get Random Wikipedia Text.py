@@ -36,6 +36,11 @@ def fetch_random_wikipedia_text(lang='en'):
     """
     ssl_context = ssl._create_unverified_context()
     last_error = "No specific error was recorded."
+    
+    # Define a user-agent to avoid being blocked by Wikipedia's API.
+    headers = {
+        'User-Agent': 'Glyphs3-Random-Text-Generator/1.0 (https://github.com/node-to-type/Glyphs3-Random-Text-Generator; mailto:your-email@example.com)'
+    }
 
     for i in range(MAX_RETRIES):
         print(f"Fetching a random Wikipedia article in '{lang}'... (Attempt {i+1}/{MAX_RETRIES})")
@@ -43,7 +48,8 @@ def fetch_random_wikipedia_text(lang='en'):
         try:
             # 1. Get a random article title
             random_url = f"https://{lang}.wikipedia.org/w/api.php?action=query&list=random&format=json&rnnamespace=0&rnlimit=1"
-            with urllib.request.urlopen(random_url, context=ssl_context) as response:
+            req = urllib.request.Request(random_url, headers=headers)
+            with urllib.request.urlopen(req, context=ssl_context) as response:
                 random_data = json.loads(response.read().decode())
             
             random_title = random_data["query"]["random"][0]["title"]
@@ -62,8 +68,9 @@ def fetch_random_wikipedia_text(lang='en'):
                 "redirects": 1,
             }
             content_url = f"{base_url}?{urllib.parse.urlencode(params)}"
+            req = urllib.request.Request(content_url, headers=headers)
 
-            with urllib.request.urlopen(content_url, context=ssl_context) as response:
+            with urllib.request.urlopen(req, context=ssl_context) as response:
                 content_data = json.loads(response.read().decode())
 
             pages = content_data["query"]["pages"]
